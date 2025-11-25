@@ -41,13 +41,13 @@ jobs:
           password: ${{ secrets.JAMESJONE }}
 
       - name: Build Docker image
-        run: docker build -t jamesjone/devops-example:latest .
+        run: docker build -t jamesjone/devops:latest .
 
       - name: Push Docker image
-        run: docker push jamesjone/devops-example:latest
+        run: docker push jamesjone/devops:latest
 
       - name: Pull image on runner
-        run: docker pull jamesjone/devops-example:latest
+        run: docker pull jamesjone/devops:latest
       
       - name: Run container
-        run: docker run -d -p 3000:3000 jamesjone/devops-example:latest
+        run: docker run -d -p 3000:3000 jamesjone/devops:latest
