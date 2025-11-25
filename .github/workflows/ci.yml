@@ -1,43 +1,53 @@
-name: Deploy Docker Container
+name: Node.js CI
 
 on:
   push:
     branches:
+      - main  # Trigger CI on pushing to the main branch
+  pull_request:
+    branches:
       - main
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
-    services:
-      docker:
-        image: docker:dind
-        options: --privileged
-        ports:
-          - 2375:2375
-        env:
-          DOCKER_TLS_CERTDIR: ""
-
+  build:
+    runs-on: self-hosted
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Docker client
-        run: |
-          echo "DOCKER_HOST=tcp://localhost:2375" >> $GITHUB_ENV
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+      
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Run tests
+      run: npm test
+  deploy:
+    needs: build         # Only run after CI passes
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
       - name: Log in to Docker Hub
-        run: |
-          echo "${{ secrets.JAMESJONE }}" | docker login -u "jamesjone" --password-stdin
+        uses: docker/login-action@v2
+        with:
+          username: "jamesjone"
+          password: ${{ secrets.JAMESJONE }}
 
-      - name: Pull latest image
+      - name: Build Docker image
+        run: docker build -t jamesjone/devops:latest .
+
+      - name: Push Docker image
+        run: docker push jamesjone/devops:latest
+
+      - name: Pull image on runner
         run: docker pull jamesjone/devops:latest
-
-      - name: Stop old container
-        run: |
-          docker stop devops || true
-          docker rm devops || true
-
-      - name: Run new container
-        run: |
-          docker run -d --name devops -p 3000:3000 jamesjone/devops:latest
+      
+      - name: Run container
+        run: docker run -d -p 3000:3000 jamesjone/devops:latest
