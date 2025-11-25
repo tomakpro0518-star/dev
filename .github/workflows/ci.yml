@@ -22,7 +22,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           username: jamesjone
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.JAMESJONE }}
 
       - name: Build and push image
         uses: docker/build-push-action@v4
